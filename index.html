@@ -174,7 +174,18 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
 .anslist article{background:#fffaf0;border:1.5px solid #ecdcbc;border-radius:16px;padding:14px 16px}
 .anslist b{font-size:17px}.anslist p{margin:8px 0 0;font-size:15px;line-height:1.55}
 .anslist span{display:block;font-size:13px;color:var(--ink2)}
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:12px 22px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9;display:none}
+.dock{display:none}
+@media(max-width:1080px){
+ .dock{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:8px;align-items:center;position:fixed;left:0;right:0;bottom:0;z-index:5;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(20,48,43,.96);border-top:1px solid var(--line);backdrop-filter:blur(8px)}
+ .dock .btn{min-height:48px}
+ .dmid{background:none;border:0;text-align:left;color:var(--cream);min-height:48px;padding:0 4px;line-height:1.25}
+ .dmid span{display:block;font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .dmid b{font-size:22px;font-variant-numeric:tabular-nums}.dmid b.over{color:var(--coral)}
+ #host{padding-bottom:110px}
+ .sfoot{display:none}
+}
+@media(max-width:640px){.chips{display:none}.metro{margin:34px 0 16px}.side .panel:first-child{display:none}}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:12px 22px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9;display:none}
 .toast.show{display:block}
 
 @media(max-width:1080px){.grid{grid-template-columns:minmax(0,1fr)}.side{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -231,7 +242,7 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
     <div class="qr" id="qr"></div>
     <p class="qlabel" id="qLabel"></p>
     <p class="qdetail" id="qDetail"></p>
-    <button class="btn ghost sm" id="copy" style="width:100%">複製手機連結</button>
+    <div class="row"><a class="btn coral sm" id="line" href="#" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none">分享到 LINE</a><button class="btn ghost sm" id="copy" style="flex:1">複製連結</button></div>
     <details class="small" id="urlBox">
      <summary>設定公開網址（QR 要用）</summary>
      <div class="urlset">
@@ -242,6 +253,7 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
    </section>
   </aside>
  </div>
+ <div class="dock" id="dock"><button class="btn ghost" id="dPrev" aria-label="上一站">←</button><button class="dmid" id="dClock"><span id="dName"></span><b id="dTime"></b></button><button class="btn coral" id="dNext">下一站 →</button></div>
  <p class="foot">為今晚準備的專屬互動網站・陪伴每個人的選擇，不以門票張數衡量信心</p>
 </div>
 
@@ -314,7 +326,7 @@ const MOODS=[
 
 const params=new URLSearchParams(location.search);
 const route=(location.hash.slice(1)||params.get('mode')||'');
-const isGuest=/^(live|join|promise|card-\d+)$/.test(route)||(route==='card'&&params.get('n'));
+const isGuest=route!=='host';  // 主持人網址要加 #host，其他人打開都是夥伴畫面
 
 if(isGuest) guest(); else host();
 
@@ -343,7 +355,7 @@ function host(){
   $('#prev').disabled=st.step===0; $('#next').disabled=st.step===4;
   $('#next').textContent=st.step===3?'完成約定 →':'下一站 →';
   $('#sBody').innerHTML=body(st.step);
-  wire(); clock(); qr(); save(); publish(); answers();
+  dock(); wire(); clock(); qr(); save(); publish(); answers();
  }
 
  let ansT=null, got=ls.get('ns_host_answers',{});
@@ -392,10 +404,12 @@ function host(){
 
  function go(i){if(i<0||i>4)return;st.step=i;st.left=STEPS[i].m*60;st.run=false;render()}
 
+ function dock(){$('#dName').textContent=(st.step+1)+'／5　'+STEPS[st.step].t;$('#dPrev').disabled=st.step===0;$('#dNext').disabled=st.step===4;$('#dNext').textContent=st.step===3?'完成約定 →':'下一站 →'}
  function clock(){
   const m=String(Math.floor(st.left/60)).padStart(2,'0'), s=String(st.left%60).padStart(2,'0');
   $('#clock').textContent=m+':'+s; $('#clock').classList.toggle('over',st.left===0);
   $('#tgl').textContent=st.run?'❚❚ 暫停':'▶ 開始';
+  $('#dTime').textContent=m+':'+s+(st.run?'  ❚❚':'  ▶');$('#dTime').classList.toggle('over',st.left===0);
   $('#clockBar').style.width=(100*(1-st.left/(STEPS[st.step].m*60)))+'%';
  }
  setInterval(()=>{if(!st.run)return;const now=Date.now();const d=Math.floor((now-last)/1000);if(d>0){last+=d*1000;st.left=Math.max(0,st.left-d);if(!st.left){st.run=false;toast('本站時間到了，依現場狀況決定是否前往下一站')}clock();save()}},400);
@@ -420,10 +434,16 @@ function host(){
   else box.innerHTML='<div style="word-break:break-all">'+esc(url)+'</div>';
   $('#qLabel').textContent=lab; $('#qDetail').textContent=det;
   $('#copy').disabled=!url; $('#copy').dataset.url=url;
+  $('#line').href=url?'https://line.me/R/share?text='+encodeURIComponent('今晚的互動網頁，點開後保持頁面開著，會跟著主持人一起走 👉 '+url):'#';
   $('#urlBox').open=!base();
  }
 
  $('#prev').onclick=()=>go(st.step-1);
+ $('#dPrev').onclick=()=>go(st.step-1);
+ $('#dNext').onclick=()=>{go(st.step+1);window.scrollTo({top:0,behavior:'smooth'})};
+ $('#dClock').onclick=()=>$('#tgl').click();
+ let wl=null;const wake=()=>{try{if(navigator.wakeLock&&!wl)navigator.wakeLock.request('screen').then(l=>{wl=l;l.addEventListener('release',()=>wl=null)}).catch(()=>{})}catch(e){}};
+ document.addEventListener('click',wake);document.addEventListener('visibilitychange',()=>{if(!document.hidden){wl=null;wake()}});
  $('#next').onclick=()=>go(st.step+1);
  $('#tgl').onclick=()=>{st.run=!st.run;last=Date.now();clock();save()};
  $('#rst').onclick=()=>{st.left=STEPS[st.step].m*60;st.run=false;clock();save()};
@@ -468,7 +488,7 @@ function guest(){
   if(S.step===0) html+='<div class="gq"><small>現在</small><h2>先好好吃頓飯</h2><p>今晚不談績效。活動開始時，這個畫面會自動換到下一步，保持這個頁面開著就好。</p></div>';
   else if(S.step===1) html+='<p class="sub">今天聽完年會，你的心情是哪一種？點一下，然後舉手比出你的數字。</p><div class="gmoods">'+MOODS.map((m,j)=>'<button class="gmood '+(mood===j?'on':'')+'" data-mood="'+j+'">'+m[0]+'<b>'+m[1]+'</b><span>'+m[2]+'</span></button>').join('')+'</div><p class="priv">沒有哪一種心情比較對。這個選擇只留在你的手機上。</p>';
   else if(S.step===2) html+='<div class="gq" id="curQ"></div><details class="gpick"'+(mine?'':'')+'><summary>想先看看其他題目？自己翻一張卡</summary><div class="picks">'+DECK.map((_,i)=>'<button class="pick '+(mine===i+1?'mine':'')+'" data-n="'+(i+1)+'">'+String(i+1).padStart(2,'0')+'</button>').join('')+'</div><div id="myQ"></div></details>';
-  else if(S.step===3) html+='<p class="sub">寫下來，下一次年會再拿出來看。</p><label class="field" for="nm">你的名字（送給主持人時顯示，可不填）</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">送出給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">複製一份存到自己的備忘錄</button><p class="priv">按「送出給主持人」才會傳出，主持人會在投影畫面上看到；只按複製就只留在你的手機。改了內容可以再送一次，會蓋掉前一份。</p>';
+  else if(S.step===3) html+='<p class="sub">寫下來，下一次年會再拿出來看。</p><label class="field" for="nm">你的名字（送給主持人時顯示，可不填）</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">送出給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">複製一份存到自己的備忘錄</button><p class="priv">按「送出給主持人」才會傳出，只有主持人看得到；只按複製就只留在你的手機。改了內容可以再送一次，會蓋掉前一份。</p>';
   else html+='<div class="gq"><small>舉杯，再出發</small><h2>下一站，我們一起走。</h2><p>跟身旁的夥伴說一句話，然後一起拍張團體照。</p></div><div class="mypromise"><small>你寫給自己的約定</small><pre id="pv"></pre><button class="btn coral" id="send" style="width:100%">'+(ls.get('ns_sent',0)?'再送一次給主持人':'送出給主持人')+'</button><button class="btn" id="cp2" style="width:100%;margin-top:10px">複製我的約定</button></div>';
   html+='<p class="priv" style="text-align:center">畫面沒有跟著換？往下拉重新整理就好。</p>';
   g.innerHTML=html;

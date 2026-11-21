@@ -187,6 +187,10 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
 @media(max-width:640px){.chips{display:none}.metro{margin:34px 0 16px}.side .panel:first-child{display:none}}
 .roster{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .roster span{background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700}
+.letter{margin:6px 0 4px}
+.letter h3{font-family:"Noto Serif TC",serif;font-size:clamp(22px,6vw,27px);line-height:1.45;margin:0 0 12px;font-weight:900;text-wrap:balance}
+.letter p{margin:0 0 10px;font-size:17px;line-height:1.9;color:#3b4542}
+.letter b{color:var(--ink);font-family:"Noto Serif TC",serif;font-size:19px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:12px 22px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9;display:none}
 .toast.show{display:block}
 
@@ -284,7 +288,7 @@ const SITE_URL = 'https://roylin9999.github.io/nextstop-dinner/';  // 網站公�
 const RELAY = 'https://ntfy.sh/';                 // 同步用的免費轉送服務（主持人換站 → 夥伴手機跟著換）
 const TOPIC = 'nextstop-junzi-r8k2v7q4m9';         // 同步頻道名稱；換一個獨一無二的字串就是新頻道
 const TOPIC_ANS = TOPIC+'-answers';               // 夥伴送出約定用的頻道（主持人畫面讀取）
-const PROMISE_LABELS = ['接下來 30 天，我想重新做好的一件事','我希望團隊給我什麼支持或資源','下一次年會，我希望帶著什麼成果回來'];
+const PROMISE_LABELS = ['接下來 30 天，我想為自己做的一件小事','我希望夥伴們怎麼陪我、給我什麼支持','下一次見面，我希望帶來的好消息'];
 const STEPS = [
  {t:'好好吃飯', s:'自由用餐', sub:'先放鬆，不急著進入活動。', m:25},
  {t:'心情溫度計', s:'輕鬆暖場', sub:'用一個手勢，說說今天聽完年會的感受。', m:10},
@@ -293,23 +297,23 @@ const STEPS = [
  {t:'舉杯，再出發', s:'收尾合照', sub:'謝謝每一位仍願意坐在一起的夥伴。', m:8}
 ];
 const QUESTIONS = [
- ['回到初心','當初決定開始經營美安，真正吸引你的是什麼？'],
- ['回到初心','剛開始經營時，有沒有一件讓你特別興奮的事？'],
- ['回到初心','經營美安到現在，你覺得自己最大的成長是什麼？'],
- ['回到初心','這幾年，你最感謝團隊裡的哪一種支持？'],
- ['回到初心','如果能回到剛加入美安的那一天，你會對自己說什麼？'],
- ['看見現在','今天大會哪一句話或哪個觀念，最讓你有感？'],
- ['看見現在','這一年經營美安，讓你覺得最有成就感的是什麼？'],
- ['看見現在','最近有沒有一位客戶，讓你覺得自己的付出很值得？'],
- ['看見現在','經營這段時間，你覺得自己遇到最大的挑戰是什麼？'],
- ['看見現在','如果現在能讓團隊幫你解決一件事，你最希望是什麼？'],
- ['看見現在','是什麼原因，讓你到今天依然願意繼續經營？'],
- ['走向未來','如果未來一年經營得更好，你最希望生活出現什麼改變？'],
- ['走向未來','今天的課程，有沒有讓你想重新嘗試一件事？'],
- ['走向未來','如果不用擔心失敗，你最想挑戰什麼新目標？'],
- ['走向未來','你認為我們團隊接下來最需要找回的是什麼？'],
- ['走向未來','如果下一次大會你帶了一位朋友來，你最希望他收穫什麼？'],
- ['走向未來','半年後再聚餐，你最希望自己能分享哪一件好消息？']
+ ['回到初心','還記得當初那個充滿期待的自己嗎？那時候你想實現什麼？'],
+ ['回到初心','剛開始的時候，有沒有一件現在想起來還會笑出來的糗事？'],
+ ['回到初心','如果沒有認識這群夥伴，你覺得現在的自己會有什麼不同？'],
+ ['回到初心','這幾年，有沒有哪位夥伴的一句話，到現在你都還記得？'],
+ ['回到初心','如果能回到剛開始的那一天，你會想拍拍自己的肩膀說什麼？'],
+ ['看見現在','今天聽了一整天，有沒有哪一句話讓你心裡動了一下？'],
+ ['看見現在','這一年，有沒有哪個時候讓你覺得特別不容易？'],
+ ['看見現在','最近有沒有一位客戶或朋友，讓你覺得「還好我有在做這件事」？'],
+ ['看見現在','我們一起辦過的活動、一起出去玩的日子裡，你最難忘的是哪一次？'],
+ ['看見現在','最近讓你覺得「活著真好」的一件小事是什麼？'],
+ ['看見現在','是什麼，讓你今天還是想坐在這裡？'],
+ ['走向未來','如果明年我們再坐在一起，你最希望帶來什麼好消息？'],
+ ['走向未來','今天的課，有沒有讓你想重新試試看的一件事？'],
+ ['走向未來','如果不用擔心失敗，你最想挑戰的一件事是什麼？'],
+ ['走向未來','你覺得我們這群人，接下來最想一起找回的是什麼？'],
+ ['走向未來','如果下次帶一位朋友來，你最想讓他看見我們的什麼？'],
+ ['走向未來','下一次聚餐你想吃什麼？順便說說，你希望那天是在慶祝什麼？']
 ];
 const ORDER = [6,0,13,9,3,16,11,5,1,14,8,4,12,2,10,7,15]; // 卡號 1~17 對應的題目（打散，讓相鄰卡號不同類別）
 /* ============================ */
@@ -399,7 +403,7 @@ function host(){
    +'<div class="cats"><span>回到初心 5 題</span><span>看見現在 6 題</span><span>走向未來 6 題</span></div>'
    +'<p class="tip">17 人都分享時，建議每人不超過 90 秒，主持人回應簡短即可。</p>';
   }
-  if(i===3) return '<div class="lead"><h3>「我願意，從一件小事開始。」</h3><p>夥伴手機已自動切到約定卡。填好按「送出給主持人」，就會出現在下方。</p></div><div class="promise" style="margin-top:18px"><div>① 接下來 30 天，我想重新做好的一件事</div><div>② 我希望團隊給我什麼支持或資源</div><div>③ 下一次年會，我希望自己能帶著什麼成果回來</div></div><div class="say"><small>主持提醒</small>邀請 3～5 位自願分享。可以提醒明天仍能依大會規則購票，但不用當場公開承諾張數，也不用以購票衡量對團隊的信任。</div>';
+  if(i===3) return '<div class="lead"><h3>「我願意，從一件小事開始。」</h3><p>夥伴手機已自動切到約定卡。填好按「送出給主持人」，就會出現在下方。</p></div><div class="promise" style="margin-top:18px"><div>① 接下來 30 天，我想為自己做的一件小事</div><div>② 我希望夥伴們怎麼陪我、給我什麼支持</div><div>③ 下一次見面，我希望帶來的好消息</div></div><div class="say"><small>主持提醒</small>邀請 3～5 位自願分享。可以提醒明天仍能依大會規則購票，但不用當場公開承諾張數，也不用以購票衡量對團隊的信任。</div>';
   return '<div class="lead"><h3>謝謝大家，還願意坐在同一張餐桌前。</h3><p>大家舉杯，跟身旁的夥伴說一句話，最後一起合照。</p></div><p class="final" style="margin-top:18px">「我知道這幾年和以前不太一樣。但今天最珍貴的，不是我們有多少人，而是我們還能坐在一起。<br><br>我們不用因為今晚感動，就急著做出任何決定。我更期待的是，從明天開始，每個人找到自己願意踏出的那一步。<br><br>很開心，今天我們還在這裡。下一站，我們一起走。」</p><p class="tip">最後任務：一起舉杯，拍一張 17 人的團體照，把今晚留作重新出發的紀念。</p>';
  }
 
@@ -488,23 +492,24 @@ function guest(){
   if(stepChanged){const first=S.step===-1;S.step=d.s;draw();if(!first){toast('下一站到了：'+GT[S.step]);try{navigator.vibrate&&navigator.vibrate(120)}catch(e){}}}
   else if(curChanged&&S.step===2) banner();
  }
- function railHtml(){rail.innerHTML=STEPS.map((x,i)=>'<span class="'+(i<S.step?'done':i===S.step?'cur':'')+'"><i></i>'+esc(x.t)+'</span>').join('')}
+ function railHtml(){rail.innerHTML=GT.map((x,i)=>'<span class="'+(i<S.step?'done':i===S.step?'cur':'')+'"><i></i>'+esc(x)+'</span>').join('')}
  function banner(){const b=$('#curQ');if(!b)return;const c=S.cur===null?null:DECK[S.cur];
-  b.innerHTML=c?'<small>這一題是：第 '+(S.cur+1)+' 號卡・'+esc(c.cat)+'</small><h2>'+esc(c.q)+'</h2><p>不用急著想漂亮的答案，說說真實的你就好。如果還沒準備好，先聽聽大家的故事也很好。</p>':'<small>老戰友真心話</small><h2>第一張卡，馬上就來</h2><p>先深呼吸，想想這一路走來的自己。</p>';
+  b.innerHTML=c?'<small>第 '+(S.cur+1)+' 號卡・'+esc(c.cat)+'</small><h2>'+esc(c.q)+'</h2><p>想笑就笑，想認真聊也很好。</p>':'<small>老戰友真心話</small><h2>第一張卡，馬上就來</h2><p>邊吃邊等，想想這一路走來的自己。</p>';
   b.style.animation='none';void b.offsetWidth;b.style.animation='';}
  function promiseFields(){return PROMISE_LABELS.map((l,i)=>'<label class="field" for="a'+i+'">'+'①②③'[i]+' '+l+'</label><textarea id="a'+i+'" placeholder="'+['例如：每週關心三位老客戶','例如：一起辦一次 6～8 人的減脂餐桌、需要產品試用組或分享素材','例如：帶著一位新朋友，和一個新的合作故事'][i]+'"></textarea>').join('')}
  function promiseText(){return '我的下一站｜30 天約定\n'+PROMISE_LABELS.map((l,i)=>'①②③'[i]+' '+l+'：'+(ls.get('ns_a'+i,'')||'')).join('\n')}
 
- const GT=['辛苦一整天了','此刻的你','說說你的故事','寫給 30 天後的自己','舉杯，再出發'];
+ const GT=['好久不見','心情暖身','真心話抽卡','給未來的自己','今晚的結尾'];
+ const L=(t,ps)=>'<div class="letter"><h3>'+t+'</h3>'+ps.map(p=>'<p>'+p+'</p>').join('')+'</div>';
  function draw(){
   railHtml();
-  const nm=ls.get('ns_name','');
-  let html='<p class="sub">第 '+(S.step+1)+' 站・共 5 站</p><h2>'+esc(GT[S.step])+'</h2>';
-  if(S.step===0) html+='<div class="gq"><small>第一站</small><h2>'+(nm?esc(nm)+'，':'')+'先好好吃頓飯吧</h2><p>今天在會場坐了一整天，真的辛苦了。這一段什麼都不用想，夾點喜歡吃的，跟身邊的老朋友聊聊天就好。</p></div>';
-  else if(S.step===1) html+='<p class="sub">聽完今天的課，心裡是什麼感覺？沒有標準答案，選一個最接近的就好。</p><div class="gmoods">'+MOODS.map((m,j)=>'<button class="gmood '+(mood===j?'on':'')+'" data-mood="'+j+'">'+m[0]+'<b>'+m[1]+'</b><span>'+m[2]+'</span></button>').join('')+'</div><p class="priv">每一種心情，都值得被好好接住。</p>';
-  else if(S.step===2) html+='<p class="sub">我們一起走了好一段路，有好多故事還沒好好說過。今晚，想聽聽你的。</p><div class="gq" id="curQ"></div><details class="gpick"><summary>好奇其他題目嗎？自己翻一張看看</summary><div class="picks">'+DECK.map((_,i)=>'<button class="pick '+(mine===i+1?'mine':'')+'" data-n="'+(i+1)+'">'+String(i+1).padStart(2,'0')+'</button>').join('')+'</div><div id="myQ"></div></details>';
-  else if(S.step===3) html+='<p class="sub">不用寫得很大，一件真心想做的小事就很好。寫下來，就是給自己的一個約定。</p><label class="field" for="nm">你的稱呼</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">把約定交給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">也存一份到自己的備忘錄</button><p class="priv">接下來 30 天，我們陪你一起記得這件事。</p>';
-  else html+='<div class="gq"><small>最後一站</small><h2>'+(nm?esc(nm)+'，':'')+'謝謝你，今晚還在這裡。</h2><p>舉起杯子，跟身旁的夥伴說一句謝謝或加油，然後一起拍張合照吧。<br>下一站，我們一起走。</p></div><div class="mypromise"><small>你寫給自己的約定</small><pre id="pv"></pre><button class="btn coral" id="send" style="width:100%">'+(ls.get('ns_sent',0)?'再交一次給主持人':'把約定交給主持人')+'</button><button class="btn" id="cp2" style="width:100%;margin-top:10px">複製我的約定</button></div>';
+  const nm=esc(ls.get('ns_name',''));
+  let html='<p class="sub">第 '+(S.step+1)+' 站・'+GT[S.step]+'</p>';
+  if(S.step===0) html+=L('嘿'+(nm?'，'+nm:'')+'，好久沒有這樣聚在一起了。',['這幾年，我們一起經歷了好多事情。','有過很熱血的日子，也有過覺得累、想放慢腳步的時候。','很開心，今天我們又坐在同一張餐桌前。','今晚不趕進度，也沒有標準答案。就吃點東西、聊聊心裡的話，聽聽彼此最近過得怎麼樣。','或許聊著聊著，我們就會想起，當初為什麼選擇一起走上這條路。']);
+  else if(S.step===1) html+=L('今天，有沒有哪個瞬間讓你心裡動了一下？',['聽了一整天的課，腦袋裡應該裝了不少東西吧！','有沒有一句話、一個故事，讓你突然想到自己，或是想起某位夥伴？','不一定要是多厲害的收穫，哪怕只是一個小小的感觸，我們都很想聽。'])+'<p class="field">此刻的心情比較像</p><div class="gmoods">'+MOODS.map((m,j)=>'<button class="gmood '+(mood===j?'on':'')+'" data-mood="'+j+'">'+m[0]+'<b>'+m[1]+'</b><span>'+m[2]+'</span></button>').join('')+'</div>';
+  else if(S.step===2) html+=L('有些故事，好像很久沒聊了。',['認識這麼久，我們可能很熟悉彼此工作的模樣，卻不一定知道大家最近心裡在想什麼。','抽一張卡，分享一個屬於你的故事吧。','想笑就一起笑，想認真聊也沒關係。如果有不想回答的題目，換一張就好。'])+'<div class="gq" id="curQ"></div><details class="gpick"><summary>想換一張，或偷看其他題目</summary><div class="picks">'+DECK.map((_,i)=>'<button class="pick '+(mine===i+1?'mine':'')+'" data-n="'+(i+1)+'">'+String(i+1).padStart(2,'0')+'</button>').join('')+'</div><div id="myQ"></div></details>';
+  else if(S.step===3) html+=L('下一次見面，你希望自己有什麼不一樣？',['我們不一定要立刻變得很厲害，也不需要每個人都有一樣的步調。','但如果接下來的日子，可以為自己做一點小小的改變，你想從哪裡開始呢？','寫下一件你真心想做的事情，給未來的自己一個溫柔的約定。'])+'<label class="field" for="nm">你的稱呼</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">把約定交給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">也存一份到自己的備忘錄</button><p class="priv">接下來 30 天，我們陪你一起記得這件事。</p>';
+  else html+=L('謝謝你'+(nm?'，'+nm:'')+'，今天還在這裡。',['我們不知道下一段路會遇見什麼。','但至少今晚，我們又多聽懂了彼此一點，也多了一點一起向前的力量。','希望下一次見面的時候，我們都有新的故事可以分享。','<b>下一站，我們繼續一起走。</b>'])+'<div class="mypromise"><small>你寫給自己的約定</small><pre id="pv"></pre><button class="btn coral" id="send" style="width:100%">'+(ls.get('ns_sent',0)?'再交一次給主持人':'把約定交給主持人')+'</button><button class="btn" id="cp2" style="width:100%;margin-top:10px">複製我的約定</button></div>';
   g.innerHTML=html;
   if(S.step===1) g.querySelectorAll('[data-mood]').forEach(b=>b.onclick=()=>{mood=+b.dataset.mood;ls.set('ns_mood',mood);g.querySelectorAll('.gmood').forEach(x=>x.classList.toggle('on',+x.dataset.mood===mood))});
   if(S.step===2){banner();const showMy=()=>{const c=mine&&DECK[mine-1];$('#myQ').innerHTML=c?'<div class="gq small"><small>第 '+mine+' 號卡・'+esc(c.cat)+'</small><h2>'+esc(c.q)+'</h2></div>':''};showMy();

@@ -166,6 +166,14 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
 .gq.small{min-height:0;padding:22px 18px}.gq.small h2{font-size:22px;margin:10px 0 0}
 .mypromise{margin-top:16px;background:#fffaf0;border:1.5px solid #ecdcbc;border-radius:16px;padding:16px}
 .mypromise small{font-weight:700;color:#9a6b2f}.mypromise pre{white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.7;margin:8px 0 12px}
+.ginput{width:100%;min-height:48px;border-radius:14px;border:1.5px solid #e3d3b4;background:#fffaf0;padding:10px 12px;font-size:16px;color:var(--ink)}
+.ans{margin-top:22px;border-top:2px dashed #d8cbb2;padding-top:18px}
+.anshead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.anshead h3{margin:0;font-size:20px}
+.anslist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:14px;max-height:560px;overflow:auto}
+.anslist article{background:#fffaf0;border:1.5px solid #ecdcbc;border-radius:16px;padding:14px 16px}
+.anslist b{font-size:17px}.anslist p{margin:8px 0 0;font-size:15px;line-height:1.55}
+.anslist span{display:block;font-size:13px;color:var(--ink2)}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:12px 22px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9;display:none}
 .toast.show{display:block}
 
@@ -203,6 +211,7 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
     <span class="mins" id="sMins"></span>
    </div>
    <div id="sBody"></div>
+   <div id="answers"></div>
    <div class="sfoot">
     <button class="btn" id="prev">← 上一站</button>
     <button class="btn ink" id="next">下一站 →</button>
@@ -256,6 +265,7 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
 const SITE_URL = 'https://roylin9999.github.io/nextstop-dinner/';  // 網站公開網址。留空時會自動抓目前網址；也可在主持畫面右側「設定公開網址」貼上
 const RELAY = 'https://ntfy.sh/';                 // 同步用的免費轉送服務（主持人換站 → 夥伴手機跟著換）
 const TOPIC = 'nextstop-junzi-r8k2v7q4m9';         // 同步頻道名稱；換一個獨一無二的字串就是新頻道
+const TOPIC_ANS = TOPIC+'-answers';               // 夥伴送出約定用的頻道（主持人畫面讀取）
 const PROMISE_LABELS = ['接下來 30 天，我想重新做好的一件事','我希望團隊給我什麼支持或資源','下一次年會，我希望帶著什麼成果回來'];
 const STEPS = [
  {t:'好好吃飯', s:'自由用餐', sub:'先放鬆，不急著進入活動。', m:25},
@@ -333,7 +343,20 @@ function host(){
   $('#prev').disabled=st.step===0; $('#next').disabled=st.step===4;
   $('#next').textContent=st.step===3?'完成約定 →':'下一站 →';
   $('#sBody').innerHTML=body(st.step);
-  wire(); clock(); qr(); save(); publish();
+  wire(); clock(); qr(); save(); publish(); answers();
+ }
+
+ let ansT=null, got=ls.get('ns_host_answers',{});
+ function answers(){
+  const box=$('#answers'); clearInterval(ansT);
+  if(st.step<3){box.innerHTML='';return}
+  const paint=()=>{const list=Object.values(got).sort((a,b)=>a.t-b.t);
+   box.innerHTML='<div class="ans"><div class="anshead"><h3>夥伴送出的約定・'+list.length+' 份</h3><div class="row"><button class="btn sm" id="ansR">↻ 更新</button><button class="btn sm ink" id="ansC" '+(list.length?'':'disabled')+'>全部複製</button></div></div>'
+   +(list.length?'<div class="anslist">'+list.map(x=>'<article><b>'+esc(x.name||'（未署名）')+'</b>'+PROMISE_LABELS.map((l,i)=>'<p><span>'+'①②③'[i]+' '+esc(l)+'</span>'+esc(x.a[i]||'—')+'</p>').join('')+'</article>').join('')+'</div>':'<p class="tip">還沒有人送出。夥伴在手機按「送出給主持人」後，會出現在這裡（每 10 秒自動更新）。</p>')+'</div>';
+   $('#ansR').onclick=pull;
+   $('#ansC').onclick=()=>copy(list.map(x=>'【'+(x.name||'未署名')+'】\n'+PROMISE_LABELS.map((l,i)=>'①②③'[i]+' '+l+'：'+(x.a[i]||'')).join('\n')).join('\n\n'));};
+  function pull(){fetch(RELAY+TOPIC_ANS+'/json?poll=1&since=12h').then(r=>r.text()).then(t=>{t.trim().split('\n').filter(Boolean).forEach(line=>{try{const j=JSON.parse(line);if(j.event!=='message')return;const d=JSON.parse(j.message);if(d&&d.id&&Array.isArray(d.a)&&(!got[d.id]||got[d.id].t<=d.t))got[d.id]=d}catch(e){}});ls.set('ns_host_answers',got);paint()}).catch(()=>toast('讀取失敗，請確認網路'))}
+  paint(); pull(); ansT=setInterval(pull,10000);
  }
 
  function body(i){
@@ -351,7 +374,7 @@ function host(){
    +'<div class="cats"><span>回到初心 5 題</span><span>看見現在 6 題</span><span>走向未來 6 題</span></div>'
    +'<p class="tip">17 人都分享時，建議每人不超過 90 秒，主持人回應簡短即可。</p>';
   }
-  if(i===3) return '<div class="lead"><h3>「我願意，從一件小事開始。」</h3><p>夥伴手機已自動切到約定卡，每人自己填寫、自己保存。</p></div><div class="promise" style="margin-top:18px"><div>① 接下來 30 天，我想重新做好的一件事</div><div>② 我希望團隊給我什麼支持或資源</div><div>③ 下一次年會，我希望自己能帶著什麼成果回來</div></div><div class="say"><small>主持提醒</small>邀請 3～5 位自願分享。可以提醒明天仍能依大會規則購票，但不用當場公開承諾張數，也不用以購票衡量對團隊的信任。</div>';
+  if(i===3) return '<div class="lead"><h3>「我願意，從一件小事開始。」</h3><p>夥伴手機已自動切到約定卡。填好按「送出給主持人」，就會出現在下方。</p></div><div class="promise" style="margin-top:18px"><div>① 接下來 30 天，我想重新做好的一件事</div><div>② 我希望團隊給我什麼支持或資源</div><div>③ 下一次年會，我希望自己能帶著什麼成果回來</div></div><div class="say"><small>主持提醒</small>邀請 3～5 位自願分享。可以提醒明天仍能依大會規則購票，但不用當場公開承諾張數，也不用以購票衡量對團隊的信任。</div>';
   return '<div class="lead"><h3>謝謝大家，還願意坐在同一張餐桌前。</h3><p>大家舉杯，跟身旁的夥伴說一句話，最後一起合照。</p></div><p class="final" style="margin-top:18px">「我知道這幾年和以前不太一樣。但今天最珍貴的，不是我們有多少人，而是我們還能坐在一起。<br><br>我們不用因為今晚感動，就急著做出任何決定。我更期待的是，從明天開始，每個人找到自己願意踏出的那一步。<br><br>很開心，今天我們還在這裡。下一站，我們一起走。」</p><p class="tip">最後任務：一起舉杯，拍一張 17 人的團體照，把今晚留作重新出發的紀念。</p>';
  }
 
@@ -445,17 +468,27 @@ function guest(){
   if(S.step===0) html+='<div class="gq"><small>現在</small><h2>先好好吃頓飯</h2><p>今晚不談績效。活動開始時，這個畫面會自動換到下一步，保持這個頁面開著就好。</p></div>';
   else if(S.step===1) html+='<p class="sub">今天聽完年會，你的心情是哪一種？點一下，然後舉手比出你的數字。</p><div class="gmoods">'+MOODS.map((m,j)=>'<button class="gmood '+(mood===j?'on':'')+'" data-mood="'+j+'">'+m[0]+'<b>'+m[1]+'</b><span>'+m[2]+'</span></button>').join('')+'</div><p class="priv">沒有哪一種心情比較對。這個選擇只留在你的手機上。</p>';
   else if(S.step===2) html+='<div class="gq" id="curQ"></div><details class="gpick"'+(mine?'':'')+'><summary>想先看看其他題目？自己翻一張卡</summary><div class="picks">'+DECK.map((_,i)=>'<button class="pick '+(mine===i+1?'mine':'')+'" data-n="'+(i+1)+'">'+String(i+1).padStart(2,'0')+'</button>').join('')+'</div><div id="myQ"></div></details>';
-  else if(S.step===3) html+='<p class="sub">不用交給任何人，這張卡留給你自己。寫下來，下一次年會再拿出來看。</p>'+promiseFields()+'<button class="btn coral" id="cp" style="width:100%;margin-top:12px">複製我的約定，存到備忘錄</button><p class="priv">不會傳給主持人或任何伺服器，只存在這支手機。</p>';
-  else html+='<div class="gq"><small>舉杯，再出發</small><h2>下一站，我們一起走。</h2><p>跟身旁的夥伴說一句話，然後一起拍張團體照。</p></div><div class="mypromise"><small>你寫給自己的約定</small><pre id="pv"></pre><button class="btn" id="cp2" style="width:100%">複製我的約定</button></div>';
+  else if(S.step===3) html+='<p class="sub">寫下來，下一次年會再拿出來看。</p><label class="field" for="nm">你的名字（送給主持人時顯示，可不填）</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">送出給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">複製一份存到自己的備忘錄</button><p class="priv">按「送出給主持人」才會傳出，主持人會在投影畫面上看到；只按複製就只留在你的手機。改了內容可以再送一次，會蓋掉前一份。</p>';
+  else html+='<div class="gq"><small>舉杯，再出發</small><h2>下一站，我們一起走。</h2><p>跟身旁的夥伴說一句話，然後一起拍張團體照。</p></div><div class="mypromise"><small>你寫給自己的約定</small><pre id="pv"></pre><button class="btn coral" id="send" style="width:100%">'+(ls.get('ns_sent',0)?'再送一次給主持人':'送出給主持人')+'</button><button class="btn" id="cp2" style="width:100%;margin-top:10px">複製我的約定</button></div>';
   html+='<p class="priv" style="text-align:center">畫面沒有跟著換？往下拉重新整理就好。</p>';
   g.innerHTML=html;
   if(S.step===1) g.querySelectorAll('[data-mood]').forEach(b=>b.onclick=()=>{mood=+b.dataset.mood;ls.set('ns_mood',mood);g.querySelectorAll('.gmood').forEach(x=>x.classList.toggle('on',+x.dataset.mood===mood))});
   if(S.step===2){banner();const showMy=()=>{const c=mine&&DECK[mine-1];$('#myQ').innerHTML=c?'<div class="gq small"><small>第 '+mine+' 號卡・'+esc(c.cat)+'</small><h2>'+esc(c.q)+'</h2></div>':''};showMy();
    g.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{mine=+b.dataset.n;ls.set('ns_pick',mine);g.querySelectorAll('.pick').forEach(x=>x.classList.toggle('mine',+x.dataset.n===mine));showMy()})}
-  if(S.step===3){[0,1,2].forEach(i=>{const t=$('#a'+i);t.value=ls.get('ns_a'+i,'')||'';t.oninput=()=>ls.set('ns_a'+i,t.value)});$('#cp').onclick=()=>copy(promiseText())}
-  if(S.step===4){$('#pv').textContent=PROMISE_LABELS.some((_,i)=>ls.get('ns_a'+i,''))?promiseText():'（還沒填寫。也可以現在回想一件 30 天內想做的小事。）';$('#cp2').onclick=()=>copy(promiseText())}
+  if(S.step===3){[0,1,2].forEach(i=>{const t=$('#a'+i);t.maxLength=300;t.value=ls.get('ns_a'+i,'')||'';t.oninput=()=>ls.set('ns_a'+i,t.value)});const nm=$('#nm');nm.value=ls.get('ns_name','')||'';nm.oninput=()=>ls.set('ns_name',nm.value);$('#cp').onclick=()=>copy(promiseText());$('#send').onclick=send}
+  if(S.step===4){$('#pv').textContent=PROMISE_LABELS.some((_,i)=>ls.get('ns_a'+i,''))?promiseText():'（還沒填寫。也可以現在回想一件 30 天內想做的小事。）';$('#cp2').onclick=()=>copy(promiseText());$('#send').onclick=send}
  }
 
+ function send(){
+  const a=[0,1,2].map(i=>(ls.get('ns_a'+i,'')||'').trim());
+  if(!a.some(Boolean)){toast('先寫下至少一題再送出');return}
+  let id=ls.get('ns_id',null); if(!id){id=Math.random().toString(36).slice(2,10);ls.set('ns_id',id)}
+  const b=$('#send'); b.disabled=true; b.textContent='送出中…';
+  fetch(RELAY+TOPIC_ANS,{method:'POST',body:JSON.stringify({id,name:(ls.get('ns_name','')||'').trim().slice(0,20),a,t:Date.now()})})
+   .then(r=>{if(!r.ok)throw 0;ls.set('ns_sent',1);toast('已送出，謝謝你的真心');b.textContent='已送出 ✓（修改後可再送）'})
+   .catch(()=>{toast('送出失敗，請確認網路後再試');b.textContent='再試一次'})
+   .finally(()=>{b.disabled=false});
+ }
  const setLive=(ok,txt)=>{$('#pulse').classList.toggle('off',!ok);$('#liveTxt').textContent=txt};
  const parse=line=>{try{const j=JSON.parse(line);if(j.event&&j.event!=='message')return null;return JSON.parse(j.message)}catch(e){return null}};
  function poll(){return fetch(RELAY+TOPIC+'/json?poll=1&since=latest').then(r=>r.text()).then(t=>{const lines=t.trim().split('\n').filter(Boolean);const d=parse(lines[lines.length-1]);if(d)apply(d);else if(S.step===-1){S.step=0;draw()}setLive(true,'已連線・跟著主持人走')}).catch(()=>{if(S.step===-1){S.step=0;draw()}setLive(false,'連線不穩，畫面可能慢一點更新')})}

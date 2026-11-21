@@ -185,6 +185,8 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
  .sfoot{display:none}
 }
 @media(max-width:640px){.chips{display:none}.metro{margin:34px 0 16px}.side .panel:first-child{display:none}}
+.roster{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.roster span{background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:700}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--paper);color:var(--ink);font-weight:700;border-radius:999px;padding:12px 22px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9;display:none}
 .toast.show{display:block}
 
@@ -250,6 +252,10 @@ textarea{width:100%;min-height:90px;border-radius:14px;border:1.5px solid #e3d3b
       <button class="btn sm" id="urlSave">儲存網址</button>
      </div>
     </details>
+   </section>
+   <section class="panel">
+    <h3>已加入的夥伴・<span id="rc">0</span> 人</h3>
+    <div class="roster" id="roster"></div>
    </section>
   </aside>
  </div>
@@ -358,18 +364,25 @@ function host(){
   dock(); wire(); clock(); qr(); save(); publish(); answers();
  }
 
- let ansT=null, got=ls.get('ns_host_answers',{});
+ let got=ls.get('ns_host_answers',{}), roster=ls.get('ns_host_roster',{});
+ function paintRoster(){const list=Object.values(roster).sort((a,b)=>a.t-b.t);$('#rc').textContent=list.length;$('#roster').innerHTML=list.length?list.map(x=>'<span>'+esc(x.name)+'</span>').join(''):'<p class="small" style="margin:0">夥伴打開連結、填好稱呼後，名字會出現在這裡。</p>'}
  function answers(){
-  const box=$('#answers'); clearInterval(ansT);
+  const box=$('#answers');
   if(st.step<3){box.innerHTML='';return}
-  const paint=()=>{const list=Object.values(got).sort((a,b)=>a.t-b.t);
-   box.innerHTML='<div class="ans"><div class="anshead"><h3>夥伴送出的約定・'+list.length+' 份</h3><div class="row"><button class="btn sm" id="ansR">↻ 更新</button><button class="btn sm ink" id="ansC" '+(list.length?'':'disabled')+'>全部複製</button></div></div>'
+  const list=Object.values(got).sort((a,b)=>a.t-b.t);
+  box.innerHTML='<div class="ans"><div class="anshead"><h3>夥伴送出的約定・'+list.length+' 份</h3><div class="row"><button class="btn sm" id="ansR">↻ 更新</button><button class="btn sm ink" id="ansC" '+(list.length?'':'disabled')+'>全部複製</button></div></div>'
    +(list.length?'<div class="anslist">'+list.map(x=>'<article><b>'+esc(x.name||'（未署名）')+'</b>'+PROMISE_LABELS.map((l,i)=>'<p><span>'+'①②③'[i]+' '+esc(l)+'</span>'+esc(x.a[i]||'—')+'</p>').join('')+'</article>').join('')+'</div>':'<p class="tip">還沒有人送出。夥伴在手機按「送出給主持人」後，會出現在這裡（每 10 秒自動更新）。</p>')+'</div>';
-   $('#ansR').onclick=pull;
-   $('#ansC').onclick=()=>copy(list.map(x=>'【'+(x.name||'未署名')+'】\n'+PROMISE_LABELS.map((l,i)=>'①②③'[i]+' '+l+'：'+(x.a[i]||'')).join('\n')).join('\n\n'));};
-  function pull(){fetch(RELAY+TOPIC_ANS+'/json?poll=1&since=12h').then(r=>r.text()).then(t=>{t.trim().split('\n').filter(Boolean).forEach(line=>{try{const j=JSON.parse(line);if(j.event!=='message')return;const d=JSON.parse(j.message);if(d&&d.id&&Array.isArray(d.a)&&(!got[d.id]||got[d.id].t<=d.t))got[d.id]=d}catch(e){}});ls.set('ns_host_answers',got);paint()}).catch(()=>toast('讀取失敗，請確認網路'))}
-  paint(); pull(); ansT=setInterval(pull,10000);
+  $('#ansR').onclick=pull;
+  $('#ansC').onclick=()=>copy(list.map(x=>'【'+(x.name||'未署名')+'】\n'+PROMISE_LABELS.map((l,i)=>'①②③'[i]+' '+l+'：'+(x.a[i]||'')).join('\n')).join('\n\n'));
  }
+ function pull(){fetch(RELAY+TOPIC_ANS+'/json?poll=1&since=12h').then(r=>r.text()).then(t=>{
+  t.trim().split('\n').filter(Boolean).forEach(line=>{try{const j=JSON.parse(line);if(j.event!=='message')return;const d=JSON.parse(j.message);if(!d||!d.id)return;
+   if(d.name&&(!roster[d.id]||roster[d.id].t<=d.t))roster[d.id]={name:d.name,t:roster[d.id]?roster[d.id].t:d.t};
+   if(Array.isArray(d.a)&&(!got[d.id]||got[d.id].t<=d.t))got[d.id]=d}catch(e){}});
+  ls.set('ns_host_answers',got);ls.set('ns_host_roster',roster);paintRoster();
+  if(st.step>=3){const open=document.activeElement;answers()}
+ }).catch(()=>{})}
+ setInterval(pull,10000);
 
  function body(i){
   if(i===0) return '<div class="lead"><h3>今晚先不談績效，先好好吃頓飯。</h3><p>17 位老戰友坐在同一張餐桌前，就是值得珍惜的事。</p></div><div class="say"><small>開動前，主持人只需要說</small><q>今天辛苦了！我們先吃飯、聊聊天。等一下會用抽卡的方式，聽聽彼此的故事，不用準備標準答案。</q></div><p class="tip">主持提醒：讓大家自由用餐約 25 分鐘。這段時間不用主持、不用報告，也不用追問買票。</p>';
@@ -451,7 +464,7 @@ function host(){
  $('#copy').onclick=()=>{if($('#copy').dataset.url)copy($('#copy').dataset.url)};
  $('#urlIn').value=st.url||SITE_URL||'';
  $('#urlSave').onclick=()=>{const v=$('#urlIn').value.trim();if(v&&!/^https?:\/\//.test(v)){toast('網址要以 https:// 開頭');return}st.url=v;save();qr();toast(v?'已儲存，QR 已更新':'已清除')};
- render();
+ render(); paintRoster(); pull();
 }
 
 /* ---------- 夥伴手機 ---------- */
@@ -488,7 +501,7 @@ function guest(){
   if(S.step===0) html+='<div class="gq"><small>現在</small><h2>先好好吃頓飯</h2><p>今晚不談績效。活動開始時，這個畫面會自動換到下一步，保持這個頁面開著就好。</p></div>';
   else if(S.step===1) html+='<p class="sub">今天聽完年會，你的心情是哪一種？點一下，然後舉手比出你的數字。</p><div class="gmoods">'+MOODS.map((m,j)=>'<button class="gmood '+(mood===j?'on':'')+'" data-mood="'+j+'">'+m[0]+'<b>'+m[1]+'</b><span>'+m[2]+'</span></button>').join('')+'</div><p class="priv">沒有哪一種心情比較對。這個選擇只留在你的手機上。</p>';
   else if(S.step===2) html+='<div class="gq" id="curQ"></div><details class="gpick"'+(mine?'':'')+'><summary>想先看看其他題目？自己翻一張卡</summary><div class="picks">'+DECK.map((_,i)=>'<button class="pick '+(mine===i+1?'mine':'')+'" data-n="'+(i+1)+'">'+String(i+1).padStart(2,'0')+'</button>').join('')+'</div><div id="myQ"></div></details>';
-  else if(S.step===3) html+='<p class="sub">寫下來，下一次年會再拿出來看。</p><label class="field" for="nm">你的名字（送給主持人時顯示，可不填）</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">送出給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">複製一份存到自己的備忘錄</button><p class="priv">按「送出給主持人」才會傳出，只有主持人看得到；只按複製就只留在你的手機。改了內容可以再送一次，會蓋掉前一份。</p>';
+  else if(S.step===3) html+='<p class="sub">寫下來，下一次年會再拿出來看。</p><label class="field" for="nm">你的稱呼</label><input id="nm" class="ginput" maxlength="20" placeholder="例如：小美">'+promiseFields()+'<button class="btn coral" id="send" style="width:100%;margin-top:12px">送出給主持人</button><button class="btn" id="cp" style="width:100%;margin-top:10px">複製一份存到自己的備忘錄</button><p class="priv">按「送出給主持人」才會傳出，只有主持人看得到；只按複製就只留在你的手機。改了內容可以再送一次，會蓋掉前一份。</p>';
   else html+='<div class="gq"><small>舉杯，再出發</small><h2>下一站，我們一起走。</h2><p>跟身旁的夥伴說一句話，然後一起拍張團體照。</p></div><div class="mypromise"><small>你寫給自己的約定</small><pre id="pv"></pre><button class="btn coral" id="send" style="width:100%">'+(ls.get('ns_sent',0)?'再送一次給主持人':'送出給主持人')+'</button><button class="btn" id="cp2" style="width:100%;margin-top:10px">複製我的約定</button></div>';
   html+='<p class="priv" style="text-align:center">畫面沒有跟著換？往下拉重新整理就好。</p>';
   g.innerHTML=html;
@@ -509,7 +522,7 @@ function guest(){
    .catch(()=>{toast('送出失敗，請確認網路後再試');b.textContent='再試一次'})
    .finally(()=>{b.disabled=false});
  }
- const setLive=(ok,txt)=>{$('#pulse').classList.toggle('off',!ok);$('#liveTxt').textContent=txt};
+ const setLive=(ok,txt)=>{$('#pulse').classList.toggle('off',!ok);const n=ls.get('ns_name','');$('#liveTxt').textContent=(n?n+'，':'')+txt};
  const parse=line=>{try{const j=JSON.parse(line);if(j.event&&j.event!=='message')return null;return JSON.parse(j.message)}catch(e){return null}};
  function poll(){return fetch(RELAY+TOPIC+'/json?poll=1&since=latest').then(r=>r.text()).then(t=>{const lines=t.trim().split('\n').filter(Boolean);const d=parse(lines[lines.length-1]);if(d)apply(d);else if(S.step===-1){S.step=0;draw()}setLive(true,'已連線・跟著主持人走')}).catch(()=>{if(S.step===-1){S.step=0;draw()}setLive(false,'連線不穩，畫面可能慢一點更新')})}
  let es=null,pollT=null;
@@ -520,7 +533,17 @@ function guest(){
    es.onerror=()=>{setLive(false,'重新連線中…');if(!pollT)pollT=setInterval(poll,15000)};
   }catch(e){pollT=setInterval(poll,15000)}
  }
- poll().then(connect);
+ function start(){const n=ls.get('ns_name','');$('#liveTxt').dataset.who=n;poll().then(connect)}
+ function joinMsg(name){let id=ls.get('ns_id',null);if(!id){id=Math.random().toString(36).slice(2,10);ls.set('ns_id',id)}
+  return fetch(RELAY+TOPIC_ANS,{method:'POST',body:JSON.stringify({id,name,t:Date.now()})})}
+ if(ls.get('ns_name','')) start();
+ else{
+  live.classList.add('hidden');rail.classList.add('hidden');
+  g.innerHTML='<h2>歡迎你來！</h2><p class="sub">先告訴我們，今晚要怎麼稱呼你？</p><label class="field" for="who">你的稱呼</label><input id="who" class="ginput" maxlength="20" placeholder="例如：小美、阿德" autocomplete="nickname"><button class="btn coral" id="go" style="width:100%;margin-top:14px">進入今晚的活動</button><p class="priv">稱呼會讓主持人知道你已經加入。</p>';
+  const go=()=>{const n=$('#who').value.trim();if(!n){toast('請先填一個稱呼');$('#who').focus();return}
+   ls.set('ns_name',n);joinMsg(n).catch(()=>{});live.classList.remove('hidden');rail.classList.remove('hidden');g.innerHTML='';start()};
+  $('#go').onclick=go;$('#who').onkeydown=e=>{if(e.key==='Enter')go()};
+ }
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
 }
 }
